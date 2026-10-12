@@ -1,28 +1,26 @@
-local frBuffTooltip = CreateFrame( "GameTooltip", "frBuffTooltip", nil, "GameTooltipTemplate" );
-frBuffTooltip:Hide()
-frBuffTooltip:SetFrameStrata("TOOLTIP")
-frBuffTooltip:SetOwner(WorldFrame, "ANCHOR_NONE")
+-- This macro only needs aura names. ClassicAPI's positional getter avoids
+-- constructing a tooltip or an AuraData table for every searched buff.
+if not C_UnitAuras or type(C_UnitAuras.UnitBuff) ~= "function" then
+	if DEFAULT_CHAT_FRAME then
+		DEFAULT_CHAT_FRAME:AddMessage("BigWigs /frbuff requires ClassicAPI C_UnitAuras.UnitBuff.")
+	end
+	return
+end
 
 local function FR_FindBuff(obuff, unit)
 	local buff=strlower(obuff);
-	local tooltip=frBuffTooltip;
-	local textleft1=getglobal(tooltip:GetName().."TextLeft1");
 	if ( not unit ) then
 		unit ='player';
 	end
 
 	for i=1, 16 do
-		tooltip:SetOwner(UIParent, "ANCHOR_NONE");
-		tooltip:SetUnitBuff(unit, i);
-		b = textleft1:GetText();
-		tooltip:Hide();
-		if ( b and strfind(strlower(b), buff) ) then
-			return "buff", i, b;
-		elseif ( b==nil ) then
+		local name = C_UnitAuras.UnitBuff(unit, i);
+		if ( name and strfind(strlower(name), buff) ) then
+			return "buff", i, name;
+		elseif ( name==nil ) then
 			break;
 		end
 	end
-	tooltip:Hide();
 end
 
 local function BuffFireResist()

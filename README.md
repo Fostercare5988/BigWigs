@@ -10,3 +10,7 @@ If you would like to contribute, just open a pull request.
 
 ## Language support
 Currently, only english clients are supported. In general, the Addon can work with other languages, but this support is only provided on a best-effort basis. It is much effort to support those languages. Feel free to contribute if you would like to have support for other languages.
+
+## Enhanced client edition
+
+Maintained by Fostercare5988 with original source and bundled-library notices retained. The `/frbuff` helper requires ClassicAPI `C_UnitAuras.UnitBuff`. Version queries are manual; automatic update prompts and raid announcements are disabled.

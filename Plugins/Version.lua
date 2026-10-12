@@ -11,10 +11,9 @@ local COLOR_RED = "ff0000"
 local COLOR_WHITE = "ffffff"
 local COLOR_GREY = "808080"
 
-local isInitialQuery = true
+local isInitialQuery = false
 
 local fork = GetAddOnMetadata("BigWigs", "X-Fork")
-local website = GetAddOnMetadata("BigWigs", "X-Website")
 
 ---------------------------------
 --      Localization           --
@@ -51,18 +50,8 @@ L:RegisterTranslations("enUS", function()
 		["BigWigs"] = true,
 		["Runs a version query on the BigWigs core."] = true,
 		["Nr Replies"] = true,
-
-		["OutOfDate"] = "Your "..fork.." Big Wigs might be out of date!\nPlease visit "..website.." to get the latest version.",
 		["Close"] = true,
 		["Cancel"] = true,
-
-		["People with outdated [fork] BigWigs:"] = "People with outdated "..fork.." BigWigs:",
-		["Notify old versions"] = true,
-		["List people with old versions to raid chat."] = true,
-		["Download newest version from [website]"] = "Download newest version from "..website,
-
-		["Show popup"] = true,
-		["Show popup warning on out of date version"] = true,
 	}
 end)
 
@@ -72,9 +61,7 @@ end)
 
 BigWigsVersionQuery = BigWigs:NewModule("Version Query")
 
-BigWigsVersionQuery.defaultDB = {
-	versionpopup = false,
-}
+BigWigsVersionQuery.defaultDB = {}
 BigWigsVersionQuery.consoleCmd = L["versionquery"]
 BigWigsVersionQuery.consoleOptions = {
 	type = "group",
@@ -110,23 +97,7 @@ BigWigsVersionQuery.consoleOptions = {
 				BigWigsVersionQuery:QueryVersion(zone)
 			end,
 		},
-		spacer = {
-			type = "header",
-			name = " ",
-			order = 10,
-		},
-		versionpopup = {
-			type = "toggle",
-			name = L["Show popup"],
-			desc = L["Show popup warning on out of date version"],
-			order = 12,
-			get = function()
-				return BigWigsVersionQuery.db.profile.versionpopup
-			end,
-			set = function(v)
-				BigWigsVersionQuery.db.profile.versionpopup = v
-			end,
-		},
+
 	}
 }
 
@@ -143,8 +114,7 @@ function BigWigsVersionQuery:OnEnable()
 	self.responseTable = {}
 	self.zoneRevisions = nil
 	self.currentZone = ""
-	self.OutOfDateShown = false
-	isInitialQuery = true -- reset after /console reloadui
+	isInitialQuery = false -- queries are explicit in this personal edition
 
 	BWL = AceLibrary("AceLocale-2.2"):new("BigWigs")
 
@@ -152,8 +122,6 @@ function BigWigsVersionQuery:OnEnable()
 	self:TriggerEvent("BigWigs_ThrottleSync", "BWVQ", 0)
 	self:TriggerEvent("BigWigs_ThrottleSync", "BWVR", 0)
 	self:TriggerEvent("BigWigs_ThrottleSync", "PEPO_BWVR", 0)
-
-	self:ScheduleEvent("versionquerytest", BigWigsVersionQuery.Test, 3, self) -- automatically check version after joining a raid, 3s delay to populate raid information after a relog
 end
 
 function BigWigsVersionQuery:PopulateRevisions()
@@ -205,13 +173,7 @@ function BigWigsVersionQuery:UpdateTablet()
 							"func", function()
 								self:QueryVersion()
 							end)
-					dewdrop:AddLine(
-							"text", L["Notify old versions"],
-							"tooltipTitle", L["Notify old versions"],
-							"tooltipText", L["List people with old versions to raid chat."],
-							"func", function()
-								self:NotifyOldVersions()
-							end)
+
 					dewdrop:AddLine(
 							"text", L["Close window"],
 							"tooltipTitle", L["Close window"],
@@ -231,74 +193,7 @@ function BigWigsVersionQuery:UpdateTablet()
 end
 
 function BigWigsVersionQuery:UpdateVersions()
-	for name, entry in pairs(self.responseTable) do
-		if not self.zoneRevisions then
-			return
-		end
-		if entry[2] == fork then
-			if self.zoneRevisions[self.currentZone] and entry[1] > self.zoneRevisions[self.currentZone] then
-				self:IsOutOfDate()
-			end
-		end
-	end
-
-	if not isInitialQuery then
-		self:UpdateTablet()
-	end
-end
-
-function BigWigsVersionQuery:IsOutOfDate()
-	if not self.OutOfDateShown then
-		self.OutOfDateShown = true
-		BigWigs:Print(L["OutOfDate"])
-
-		if self.db.profile.versionpopup then
-			local dialog = nil
-			StaticPopupDialogs["BigWigsOutOfDateDialog"] = {
-				text = L["OutOfDate"],
-				button1 = L["Close"],
-				button2 = L["Cancel"],
-				OnAccept = function()
-					StaticPopup_Hide("BigWigsOutOfDateDialog")
-				end,
-				OnCancel = function()
-					StaticPopup_Hide("BigWigsOutOfDateDialog")
-				end,
-				OnShow = function(self, data)
-					local editbox = getglobal(this:GetName() .. "WideEditBox")
-					editbox:SetText(website)
-					editbox:SetWidth(250)
-					editbox:ClearFocus()
-					editbox:HighlightText()
-					getglobal(this:GetName() .. "Button2"):Hide()
-				end,
-				hasEditBox = true,
-				hasWideEditBox = true,
-				maxLetters = 42,
-				timeout = 0,
-				whileDead = true,
-				hideOnEscape = true,
-				preferredIndex = 3, -- avoid some UI taint, see http://www.wowace.com/announcements/how-to-avoid-some-ui-taint/
-			}
-			local dialog = StaticPopup_Show("BigWigsOutOfDateDialog")
-		end
-	end
-end
-
-function BigWigsVersionQuery:NotifyOldVersions()
-	local line = ""
-	for name, entry in pairs(self.responseTable) do
-		if entry[2] == fork and self.zoneRevisions[self.currentZone] and entry[1] < self.zoneRevisions[self.currentZone] then
-			if line == "" then
-				line = name
-			else
-				line = line .. " " .. name
-			end
-		end
-	end
-	SendChatMessage(L["People with outdated [fork] BigWigs:"], "RAID")
-	SendChatMessage(line, "RAID")
-	SendChatMessage(L["Download newest version from [website]"], "RAID")
+    self:UpdateTablet()
 end
 
 function BigWigsVersionQuery:OnTooltipUpdate()
@@ -334,7 +229,6 @@ function BigWigsVersionQuery:OnTooltipUpdate()
 					self:PopulateRevisions()
 				end
 				if self.zoneRevisions[self.currentZone] and entry[1] > self.zoneRevisions[self.currentZone] then
-					self:IsOutOfDate()
 					color = COLOR_GREEN
 				elseif self.zoneRevisions[self.currentZone] and entry[1] < self.zoneRevisions[self.currentZone] then
 					color = COLOR_RED
@@ -342,7 +236,7 @@ function BigWigsVersionQuery:OnTooltipUpdate()
 			elseif entry[1] == -3 then -- no response
 				color = COLOR_RED
 			end
-			
+
 			cat:AddLine("text", name, "text2", "|cff" .. color .. entry[2] .. " " .. entry[1] .. "|r")
 		end
 	end
@@ -483,9 +377,9 @@ function BigWigsVersionQuery:BigWigs_RecvSync(sync, rest, nick)
 			self:PopulateRevisions()
 		end
 		if not self.zoneRevisions[rest] then
-			self:TriggerEvent("BigWigs_SendSync", "PEPO_BWVR -1 " .. nick)
+			self:TriggerEvent("BigWigs_SendSync", "PEPO_BWVR -1 " .. nick .. " " .. fork)
 		else
-			self:TriggerEvent("BigWigs_SendSync", "PEPO_BWVR " .. self.zoneRevisions[rest] .. " " .. nick)
+			self:TriggerEvent("BigWigs_SendSync", "PEPO_BWVR " .. self.zoneRevisions[rest] .. " " .. nick .. " " .. fork)
 		end
 	elseif string.find(sync, "BWVR") and self.queryRunning and nick and rest then
 		-- Means it's either a old style or new style reply.
@@ -506,7 +400,7 @@ function BigWigsVersionQuery:BigWigs_RecvSync(sync, rest, nick)
 					remoteFork = "Pepo"
 				else
 					remoteFork = L["unknown"]
-				end				
+				end
 			end
 		end
 
