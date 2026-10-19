@@ -5,6 +5,10 @@ This Modification is built for Patch 1.12.1
 ## How to install
 Either clone the repository to your WoW/Interface/Addons folder, or download manually via github (click on Clone or Download -> Download ZIP. Do not forget to rename the directory to "BigWigs" afterwards.
 
+## Requirements
+
+- ClassicAPI 1.16.0 or later.
+
 ## Contributing
 If you would like to contribute, just open a pull request.
 

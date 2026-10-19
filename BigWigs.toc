@@ -1,4 +1,6 @@
 ## Interface: 11200
+## X-ClassicAPI-Min-Version: 1.16.0
+## Dependencies: !!!ClassicAPI
 
 ## X-Revision: 30139
 ## X-Fork: Pepo
@@ -23,6 +25,7 @@
 ## SavedVariables: BigWigsDB, BigWigsFubarDB, BigWigsCommonAurasDB, BigWigsZombieFoodDB, BigWigsRespawnTimersDB, BigWigsContributeFlag
 ## SavedVariablesPerCharacter: BigWigsDBPerChar, BigWigsBarClick
 
+ClassicAPIRequirement.lua
 Libs\AceLibrary\AceLibrary.lua
 
 Libs\Compost-2.0\Compost-2.0.lua
